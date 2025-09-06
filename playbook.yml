@@ -1,6 +1,6 @@
 ---
 - name: This play is for Docker Setup on Ubuntu
-  hosts: managed-node02
+  hosts: godemo
   become: yes
 
   tasks:
