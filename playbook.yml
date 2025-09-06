@@ -1,5 +1,4 @@
----
-- name: This play is for Docker Setup on Ubuntu
+- name: Install Docker on Ubuntu
   hosts: godemo
   become: yes
 
@@ -31,16 +30,19 @@
       ansible.builtin.apt:
         update_cache: yes
 
-    - name: Install Docker using docker.io package (alternative)
+    - name: Install Docker CE from official repo
       ansible.builtin.apt:
-        name: docker.io
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
         state: present
         update_cache: yes
-      when: ansible_facts['distribution'] == "Ubuntu" and ansible_facts['distribution_version']|int >= 22    
 
     - name: Ensure Docker is running
       ansible.builtin.systemd:
         name: docker
         enabled: yes
         state: started
-
