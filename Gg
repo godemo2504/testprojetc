@@ -1,0 +1,20 @@
+#cloud-config
+
+package_update: true
+package_upgrade: true
+
+write_files:
+  - path: /etc/resolv.conf
+    content: |
+      nameserver 8.8.8.8
+      nameserver 1.1.1.1
+      options use-vc
+    permissions: '0644'
+
+runcmd:
+  - chattr +i /etc/resolv.conf
+  - yum install -y curl policycoreutils openssh-server perl
+  - systemctl enable sshd
+  - systemctl start sshd
+  - curl https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.rpm.sh | bash
+  - EXTERNAL_URL="http://$(curl -s ifconfig.me)" yum install -y ${gitlab_version}
