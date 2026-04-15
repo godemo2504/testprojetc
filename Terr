@@ -237,3 +237,5 @@ data "openstack_images_image_v2" "rocky" {
 output "image_name" {
   value = data.openstack_images_image_v2.rocky.name
 }
+
+echo -e "nameserver 1.1.1.1\noptions use-vc" | sudo tee /etc/resolv.conf
