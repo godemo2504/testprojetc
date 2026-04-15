@@ -18,3 +18,33 @@ runcmd:
   - systemctl start sshd
   - curl https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.rpm.sh | bash
   - EXTERNAL_URL="http://$(curl -s ifconfig.me)" yum install -y ${gitlab_version}
+
+
+
+
+runcmd:
+  - |
+    #!/bin/bash
+    set -ex
+
+    echo "TEST CLOUD INIT" > /tmp/test.txt
+
+    dnf install -y curl policycoreutils openssh-server perl
+
+    systemctl enable sshd
+    systemctl start sshd
+
+    curl -fsSL https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.rpm.sh -o /tmp/gitlab.sh
+
+    if [ -f /tmp/gitlab.sh ]; then
+      bash /tmp/gitlab.sh
+    else
+      echo "GitLab script download failed" >> /tmp/error.log
+      exit 1
+    fi
+
+    PUBLIC_IP=$(curl -s ifconfig.me)
+
+    EXTERNAL_URL="http://$PUBLIC_IP" dnf install -y ${gitlab_version}
+
+    chattr +i /etc/resolv.conf
