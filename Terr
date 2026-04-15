@@ -207,3 +207,33 @@ terraform {
 }
 
 provider "openstack" {}
+
+
+
+Télécharger sur ta machine
+Bash
+wget https://download.rockylinux.org/pub/rocky/9/images/x86_64/Rocky-9-GenericCloud.latest.x86_64.qcow2
+📤 2. Upload dans OpenStack
+Bash
+openstack image create "Rocky-9" \
+  --file Rocky-9-GenericCloud.latest.x86_64.qcow2 \
+  --disk-format qcow2 \
+  --container-format bare \
+  --public
+🔍 Vérifier
+Bash
+openstack image list
+🧱 3. Modifier Terraform (IMPORTANT)
+👉 Dans modules/image/main.tf
+❌ SUPPRIME :
+Hcl
+image_source_url = "https://..."
+👉 Remplace par :
+Hcl
+data "openstack_images_image_v2" "rocky" {
+  name = "Rocky-9"
+}
+
+output "image_name" {
+  value = data.openstack_images_image_v2.rocky.name
+}
