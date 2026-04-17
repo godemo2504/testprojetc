@@ -1,0 +1,121 @@
+
+modules/vm/main.tf
+Hcl
+resource "openstack_compute_instance_v2" "vm" {
+  name        = var.name
+  flavor_name = var.flavor
+  image_name  = var.image
+  key_pair    = var.keypair
+
+  security_groups = [var.security_group]
+
+  network {
+    uuid = var.network_id
+  }
+
+  user_data = base64encode(
+    templatefile(var.cloud_init, {})
+  )
+}
+
+resource "openstack_networking_floatingip_v2" "fip" {
+  pool = var.external_network
+}
+
+resource "openstack_compute_floatingip_associate_v2" "assoc" {
+  floating_ip = openstack_networking_floatingip_v2.fip.address
+  instance_id = openstack_compute_instance_v2.vm.id
+}
+
+output "public_ip" {
+  value = openstack_networking_floatingip_v2.fip.address
+}
+modules/vm/variables.tf
+Hcl
+variable "name" {}
+variable "flavor" {}
+variable "image" {}
+variable "network_id" {}
+variable "security_group" {}
+variable "external_network" {}
+variable "keypair" {}
+variable "cloud_init" {}
+🚀 3. MAIN.TF (MULTI VM)
+👉 Maintenant tu déclares tes VM comme des services 👇
+GitLab
+Hcl
+module "gitlab" {
+  source = "./modules/vm"
+
+  name             = "gitlab-server"
+  flavor           = "m1.medium"
+  image            = module.image.image_name
+  network_id       = module.network.network_id
+  security_group   = module.security.secgroup_name
+  external_network = var.external_network
+  keypair          = "gitlab-key"
+
+  cloud_init = "${path.module}/cloud-init/gitlab.yaml.tpl"
+}
+SonarQube
+Hcl
+module "sonarqube" {
+  source = "./modules/vm"
+
+  name             = "sonarqube-server"
+  flavor           = "m1.medium"
+  image            = module.image.image_name
+  network_id       = module.network.network_id
+  security_group   = module.security.secgroup_name
+  external_network = var.external_network
+  keypair          = "gitlab-key"
+
+  cloud_init = "${path.module}/cloud-init/sonarqube.yaml.tpl"
+}
+Jenkins
+Hcl
+module "jenkins" {
+  source = "./modules/vm"
+
+  name             = "jenkins-server"
+  flavor           = "m1.medium"
+  image            = module.image.image_name
+  network_id       = module.network.network_id
+  security_group   = module.security.secgroup_name
+  external_network = var.external_network
+  keypair          = "gitlab-key"
+
+  cloud_init = "${path.module}/cloud-init/jenkins.yaml.tpl"
+}
+Artifactory
+Hcl
+module "artifactory" {
+  source = "./modules/vm"
+
+  name             = "artifactory-server"
+  flavor           = "m1.large"
+  image            = module.image.image_name
+  network_id       = module.network.network_id
+  security_group   = module.security.secgroup_name
+  external_network = var.external_network
+  keypair          = "gitlab-key"
+
+  cloud_init = "${path.module}/cloud-init/artifactory.yaml.tpl"
+}
+📤 4. OUTPUTS
+Hcl
+output "gitlab_ip" {
+  value = module.gitlab.public_ip
+}
+
+output "sonarqube_ip" {
+  value = module.sonarqube.public_ip
+}
+
+output "jenkins_ip" {
+  value = module.jenkins.public_ip
+}
+
+output "artifactory_ip" {
+  value = module.artifactory.public_ip
+}
